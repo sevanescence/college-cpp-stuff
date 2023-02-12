@@ -21,4 +21,4 @@ Hello, world!
 ```
 
 # TODO
-- [] Implement proposals in build.py
+- [ ] Implement proposals in build.py
