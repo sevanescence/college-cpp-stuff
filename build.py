@@ -6,6 +6,10 @@ import sys
 # $> py build.py hello_world.cpp -c clang++ -a "-Wall" 
 # $> py build.py stack.cpp -c g++ -a "-O3 -Wall" -std=c++20
 
+# alternative (changing default settings, store in local repo cache):
+# $> py build.py --settings -c g++ -a "-Wall"
+# $> py build.py --settings -c clang++ -a "-Wall -std=c++20" 
+
 if len(sys.argv) < 2 or sys.argv[1] == "--help":
     print(
         "This program compiles a file in the examples folder and executes it.",

@@ -19,3 +19,6 @@ Output:
 ```
 Hello, world!
 ```
+
+# TODO
+- [] Implement proposals in build.py
