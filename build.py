@@ -2,48 +2,76 @@ import os
 import subprocess
 import sys
 
-import argparse
+from argparse import ArgumentParser
 import shutil
 
-# (proposal) example invocation:
-# $> py build.py hello_world.cpp -c clang++ -a "-Wall" 
-# $> py build.py stack.cpp -c g++ -a "-O3 -Wall" -std=c++20
+if os.name == 'nt':
+    TARGET_BIN_FILENAME = 'target.exe'
+else:
+    TARGET_BIN_FILENAME = 'target.out'
 
 # alternative (changing default settings, store in local repo cache):
 # $> py build.py --settings -c g++ -a "-Wall"
 # $> py build.py --settings -c clang++ -a "-Wall -std=c++20" 
 
-if len(sys.argv) < 2 or sys.argv[1] == "--help":
-    print(
-        "This program compiles a file in the examples folder and executes it.",
-        "This program uses clang++ by default, but doesn't yet support specified alternatives nor custom compiler arguments.",
-        "\n"
-        f"{sys.argv[0]} [--help|<src>.cpp]",
-        "",
-        "    --help:\t Show this help screen.",
-        "    <src>.cpp:\t Compile a file in ./examples/<src>.cpp",
-        "",
-        "Example:",
-        f"py {sys.argv[0]} hello_world.cpp",
-        "",
-        sep='\n'
-    )
+# TODO: Add support for custom compiler arguments
+
+# -- argparse boilerplate --
+
+parser = ArgumentParser(
+    prog=sys.argv[0],
+    description='Build script for college-cpp-stuff',
+    epilog='If any issues with this script are found, the user is at ' 
+           'liberty to open an issue thread on the GitHub repository. '
+           'https://github.com/MakotoMiyamoto/college-cpp-stuff '
+           'NOTE: Multi-word filepaths are not currently supported.'
+)
+parser.add_argument('file', nargs='?', help='driver file of the program (where main() is defined). Parent folder specified by --file-dir')
+parser.add_argument('-c', '--cxx', help='path to compiler to call (default: clang++)', default='clang++', type=str, nargs=None)
+parser.add_argument('-f', '--file-dir', help='directory of source folder', default='./examples/')
+parser.add_argument('-b', '--build-dir', help='build directory', default='./debug/')
+parser.add_argument('-n', '--build-only', help='compile without running target', action='store_true')
+
+parser.add_argument('--clean', help='clean target build directory', action='store_true')
+
+# --
+
+# -- Program Logic --
+
+args = parser.parse_args()
+
+build_dir: str = str(os.path.abspath(args.build_dir))
+file_dir: str = str(os.path.abspath(args.file_dir))
+file_src: str = args.file
+cxx: str = args.cxx
+
+proceed_clean: bool = args.clean
+build_only: bool = args.build_only
+
+if proceed_clean:
+    if os.path.exists(build_dir):
+        shutil.rmtree(build_dir)
+    else:
+        print("Folder tree is already clean.")
+    exit(0)
+
+print(args, build_dir)
+
+if file_src is None:
+    print('Error: Missing target source file.')
+    parser.print_help()
     exit(1)
 
-DEBUG_PATH = os.path.join(os.getcwd(), 'debug')
-TARGET_SRC_FILE = os.path.join(os.getcwd(), 'examples', sys.argv[1])
+source_filepath = os.path.join(file_dir, file_src)
+target_filepath = os.path.join(build_dir, TARGET_BIN_FILENAME)
 
-DEFAULT_BIN_PATH_DEBUG = os.path.join(os.getcwd(), 'debug', 'a.exe')
+if not os.path.exists(build_dir):
+    os.mkdir(build_dir)
 
-if not os.path.exists(DEBUG_PATH):
-    os.mkdir(DEBUG_PATH)
+# NOTE: Only works with g++ and clang++, I don't plan on adding support for other compilers.
+compiler_args = f'{cxx} -Wall -std=c++20 -o {target_filepath} {source_filepath}'
 
-subprocess.run([
-    "clang++",
-    "-o",
-    DEFAULT_BIN_PATH_DEBUG,
-    TARGET_SRC_FILE,
-    "-Wall"
-])
+subprocess.run(compiler_args.split())
 
-subprocess.run([DEFAULT_BIN_PATH_DEBUG])
+if not build_only:
+    subprocess.run(target_filepath)
