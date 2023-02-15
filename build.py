@@ -69,6 +69,7 @@ if not os.path.exists(build_dir):
     os.mkdir(build_dir)
 
 # NOTE: Only works with g++ and clang++, I don't plan on adding support for other compilers.
+# TODO: Check if machine actually has the compiler specified. Maybe feature fallback options.
 compiler_args = f'{cxx} -Wall -std=c++20 -o {target_filepath} {source_filepath}'
 
 subprocess.run(compiler_args.split())
